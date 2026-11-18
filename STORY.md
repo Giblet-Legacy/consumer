@@ -136,19 +136,99 @@ James's passphrase, as for everything else in the Legacy.
 
 | Repository | Change |
 |---|---|
-| **ai-gate** (SPEC draft 5) | answer kinds `assumption` (default) and `passage`; P… play-path grounding, never canon; the proposal checks |
-| **consumer** (SPEC draft 2) | `kind: "story"` in the declaration; `play` sessions in its state; `serve`, the story API (world, parameters, play step, keep fact, keep scene, rate); "Keep" writes Cockpit v1.8 drafts only |
+| **ai-gate** (SPEC draft 5) | answer kinds `assumption` (default) and `passage`; P… play-path and D… derived grounding, never canon; the proposal checks, with P12 laws and P13 contradictions as hooks the caller supplies |
+| **consumer** (SPEC draft 2) | `kind: "story"` in the declaration (with `rules/laws.json` pinned); `play` sessions in its state; the presence and trust λ (§8.1); P12 laws, P13 contradictions, the Echo before "Keep", the Weaver's "Previously on"; `serve`, the story API (world, parameters, play step, keep fact, keep scene, rate, ask the world); "Keep" writes Cockpit v1.8 drafts only |
+| **lllm** or **explorer-d334-forge** | the FICTION gap in §8.4, whichever James chooses |
 | **the-legacy** (SPEC_V1_12, 1.12.0) | the Story tab showing the consumer server; `FORGE_STORY_PUBLIC_URL`; `boot_v1_12.py` starts it; view-only on the VPS |
 
 Build order: ai-gate, then the consumer runtime with `serve`, then the
 Legacy Story tab, then `new noir`.
 
-## 8. Limits, said plainly
+## 8. Deeper: Leighton weight, and the other layers that help
 
-- The gate proves that a passage cites only what it was given. It cannot
-  prove that every conflict was reported, or that the model did not
-  guess. That is why canon needs James's commit, and keeping a passage
-  needs his HAL seal.
+James: "deeper leighton weight and any other repos that will help".
+
+### 8.1 Leighton weight, four ways
+
+Every λ below is computed with `leighton_engine_v3.compute_lambda` and
+the `weighted` fusion, with k explicit and recorded. None is stored:
+each is recomputed from its observations and reproducible from its
+parameter block. **λ informs and never decides.**
+
+| λ of… | Observations | Domain | What it is for |
+|---|---|---|---|
+| **the AI, on this story** | James's 1-5 ratings (0.40 / 0.80 / 1.00 / 1.50 / 2.00) | `ai-gate/<model>/<story>` | how far to trust its passages (ai-gate §8) |
+| **each subject's presence** (characters, places, objects, open mysteries) | each time a passage builds on one of its claims: 1.50 in a sealed passage, 1.20 in a played one | `story/<name>/presence` | **what is going cold.** A character or clue not touched in a while drifts back to 1.00 and is listed as fading, Weaver-style, so neither James nor the AI drops a thread by accident |
+| **relationships inside the story** (who trusts whom) | each canon claim between two subjects whose predicate is in the story's **trust map** (below) | `story/<name>/trust/<from>/<to>` | **noir's shifting loyalties as numbers:** `Marlowe → The Vigilante` falls when he is lied to and rises when he is saved. It is shown on the page and sent to the AI as derived grounding (§8.3) |
+| **the consumer** | what James did with its drafts (committed 1.50, refused 0.40) | `consumer/<name>` | the consumer's own track record (consumer SPEC §7) |
+
+**The story's own k.** Leighton's rule is that k is always calibrated
+per domain. A story declares its own, as parameter claims about the
+story entity: `<story> / presence_k / <per day>` and
+`<story> / trust_k / <per day>`. A slow-burn story fades slowly, a
+thriller fast. With no parameter, the stack's 0.1 per day applies, and
+the page says so.
+
+**The trust map** is a parameter claim too: one
+`<story> / trust_value / <predicate>=<value>` claim per predicate, on
+HAL's ladder. For example `betrays=0.40`, `lies_to=0.60`,
+`helps=1.50`, `saves=2.00`. Only predicates in the map move trust. So
+James decides what counts as loyalty in his world, and can change it by
+committing a new parameter.
+
+**Trust as a story mechanic.** A relationship's λ has a HAL tier, so
+the page can say "Marlowe's trust in the Vigilante: NOVICE, falling",
+and the AI is told the same. Below 0.60 is *quarantined trust* (he
+won't believe a word), which is what noir runs on.
+
+### 8.2 The layers that help, and what each does
+
+| Layer | Used for | Without it, the story would… |
+|---|---|---|
+| **P12 Rules v3** | **The story's laws**, as declarative rules in the consumer repo (`rules/laws.json`, pinned by hash in the sealed declaration). Each proposal a passage makes is previewed against them. A law that fires on a FICTION proposal (`subject_matches: "The Vigilante"`, `object_contains: "kill"`) **refuses that proposal** and names the law. | rely on the AI to report that it broke a law |
+| **P13 DataCube v3** | **Contradiction, checked, not trusted:** `find_contradiction` runs each proposal against canon (same subject and object, opposite polarity). A hit is added to the passage's conflicts **even if the AI did not report it**, marked "found by the gate". | rely on the AI to report every contradiction |
+| **The Echo v1.1** | **"Keep fact" shows the Echo first:** what committing the fact would contradict, which laws it fires, and the λ involved, just as the Legacy's New card does for claims. | draft blind |
+| **The Weaver v1.4** | **"Previously on…":** at the start of a session, a recap written from canon, with the fading subjects and open mysteries (UNKNOWN-face claims) first. | start every session cold |
+| **LLLM Voice 0.1.2** | **"Ask the world":** a box on the page that answers questions from canon claims alone ("what does Marlowe suspect?"), locally, without the AI. | send every question to Gemini |
+| **SCP Substrate (the Field)** | **The world as a map:** the story entity's subjects and claims appear in the Field, already, from P9. | (a nicety: no change needed) |
+| **P17 Mediator** | **The stack learns from stories:** the story's usage digest shows which predicates stories share (`suspects`, `owes`, `betrays`), and they can mature into the spine. | — |
+
+### 8.3 What the AI is held to, now
+
+Grounding grows a fourth kind, **D… (derived)**: the computed values the
+AI must respect but which are not claims. Fading subjects, with their
+presence λ, and the relationships, with their trust λ and tier. Each is
+recomputed for the ask and stored with it, labelled derived. With C
+(canon), A (approved), P (the play path) and D, a passage is checked
+by:
+
+1. the references it cites (all given: ai-gate);
+2. the laws it would break (P12: proposal refused);
+3. the contradictions it would make (P13: conflict added, found by the
+   gate);
+4. the conflicts it reports itself (kept);
+5. and James, through HAL, for everything else.
+
+### 8.4 Gaps found, to fix in their own layers
+
+- **The Voice reads only claims with a `polarity`,** and the Cockpit
+  writes polarity for FACT, COUNTER and CONTEXT only. So FICTION claims
+  are invisible to the Voice today. "Ask the world" needs a Voice layer
+  that reads the FICTION face for a story consumer (lllm 0.1.3), or a
+  Cockpit layer that writes polarity for FICTION. Which one is James's
+  call.
+- **P12's matchers are simple:** a subject, a face list, an
+  object-contains string. A law like "never kills" is expressible. A
+  law like "never twice in one night" is not, and stays with the AI and
+  HAL until P12 grows.
+
+## 9. Limits, said plainly
+
+- The gate proves that a passage cites only what it was given. P12
+  catches the laws it breaks, and P13 the polarity contradictions it
+  makes (§8.2). Other drift (a character acting out of character, a
+  guess presented as sure) no check can prove. That is why canon needs
+  James's commit, and keeping a passage needs his HAL seal.
 - Play sends canon claims in the story's scope to Google with every
   step. A story's scope is what is shared, so keep a story's world in
   its own entity.
