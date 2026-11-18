@@ -53,7 +53,7 @@ what it uses in its declaration (`uses`, §2), sealed by James. The
 runtime gives it those and nothing else. Anything a consumer reaches for
 that it did not declare is refused, and named in the turn report.
 
-**How a thing may be used** is one of five modes. A layer's mode is
+**How a thing may be used** is one of six modes. A layer's mode is
 fixed here, not chosen by the consumer:
 
 | Mode | Means |
