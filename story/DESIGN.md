@@ -1,6 +1,6 @@
 # Interactive stories on the Legacy
 
-STORY.md — the design for story consumers: define the parameters, build the world as claims, and play, with continuity held by the Legacy.
+story/DESIGN.md — the design for story consumers: define the parameters, build the world as claims, and play, with continuity held by the Legacy.
 
 Function:
     James, 2026-11-18: "so say i want a story i build an access point

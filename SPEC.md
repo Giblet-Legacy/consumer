@@ -14,7 +14,7 @@ Function:
 
 Tier:     Tier 1 — Consumer (the runtime every declared consumer runs on)
 Depends:  P1 Envelope, P2 Sign, P3 Freeze v2, P9 substrate_v4 (read-only), P14 Leighton Engine v3, P15 HAL v2, P16 Time, P17 Mediator 1.1.0 (reads the digests), Cockpit forge_cli_v1_8 (drafts), ai-gate 0.1.0 (threads, optional)
-Version:  SPEC 0.1.0 (draft 1)
+Version:  SPEC 0.1.0 (draft 2)
 Licence:  MSL-1.0
 Author:   James Gilbert (Giblets Forge)
 
@@ -45,6 +45,66 @@ through the Legacy:
 | helps the stack grow | a usage digest that P17 Mediator reads |
 | is seen | the Legacy page (a later Legacy layer) |
 
+### 1.1 What a consumer may use, and how
+
+James: "does our spec for consumers include the things available to it
+and how they may apply". This is the full catalogue. A consumer names
+what it uses in its declaration (`uses`, §2), sealed by James. The
+runtime gives it those and nothing else. Anything a consumer reaches for
+that it did not declare is refused, and named in the turn report.
+
+**How a thing may be used** is one of five modes. A layer's mode is
+fixed here, not chosen by the consumer:
+
+| Mode | Means |
+|---|---|
+| **read** | read-only, verified where the layer can verify; never writes |
+| **compute** | a pure calculation on data the consumer already has; nothing written |
+| **draft** | writes a Cockpit draft only; canon when James commits |
+| **gate** | through ai-gate: an assumption, never a fact, sealed by HAL |
+| **seal** | needs James's own act with his key (HAL seal, P3 seal, inbox commit); the runtime only shows the command |
+| **own** | the consumer's own state, ledger or files, under `$FORGE_HOME/consumers/<name>/` or its repository |
+
+**The catalogue:**
+
+| `uses` key | Layer | Mode | How a consumer may apply it |
+|---|---|---|---|
+| (always) | P1 Envelope, P2 Sign, P3 Freeze v2, P16 Time | compute | canonical JSON, hashes and timestamps for its own documents; verifying its declaration's seal. It never signs with James's key |
+| (always) | P9 substrate_v4 | read | its world: verified, active claims in its scope and declared faces; entities, subjects, membership |
+| (always) | the Cockpit v1.8 inbox | draft | `may_draft` kinds only, in declared faces and scope. It sees its drafts' fates (done or refused) |
+| (always) | P14 Leighton Engine v3 | compute | λ from its own observations, with k explicit and declared, weighted fusion, never stored, never the decider. What it measures is declared per kind (for example presence, trust, strategy outcomes) |
+| (always) | P17 Mediator | own | its usage digest in its repository's `sc/`, which P17 reads |
+| `ai` | ai-gate | gate | its thread: ideas as assumptions grounded in its canon. An assumption is never a fact, never a draft without James, and never an input to an action (an order) |
+| `hal` | P15 HAL v2 | seal | anything consequential waits for a HAL seal: keeping a passage, an order, a mandate. Approve and refuse are both sealed. The runtime verifies seals and never makes them |
+| `rules` | P12 Rules v3 | compute | its laws in `rules/*.json`, pinned by hash in the declaration. A proposal or order that fires a law is refused. Matchers: subject, face, object-contains (numeric limits are not in P12 yet) |
+| `contradictions` | P13 DataCube v3 | compute | `find_contradiction` against its canon (same subject and object, opposite polarity). A hit is a conflict, added even when nobody reported it |
+| `echo` | the Echo v1.1 | read | "what would committing this do?": contradictions, laws fired and λ, shown before any draft |
+| `briefing` | the Weaver v1.4 | read | a recap from its canon, fading UNKNOWNs first ("Previously on…", the morning briefing) |
+| `voice` | LLLM Voice 0.1.2 | read | questions answered from its canon alone, without the AI. FICTION claims need the polarity gap closed first (story/DESIGN.md §8.4) |
+| `ledger` | P4 Ledger v2 | own | its own hash-chained ledger in `$FORGE_HOME/consumers/<name>/ledger.jsonl`. It never writes the Legacy's ledger |
+| `page` | the Legacy (a later layer) | read | a tab on the Legacy page, served by `consumer.py serve`, view-only on the VPS. The page writes drafts and never signs |
+| `field` | SCP Substrate (the Field) | read | its entity and subjects appear as orbs, from P9, with no change |
+| `files` | its repository | own | declared paths hashed each turn; new, changed and gone files reported |
+| `exchange` | a trading adapter (trading/DESIGN.md) | own | public market data read; orders only under HAL (a per-order seal, or a sealed mandate), paper by default |
+
+**Never, for any consumer:** writing `forge.db`, `store.db`, `lllm.db`
+or the Legacy's ledger; signing with James's key; committing a draft;
+calling a model except through ai-gate; and keeping any key on the VPS.
+
+### 1.2 Kinds
+
+A consumer's `kind` picks which engines the runtime runs for it. Each
+kind's design lives in its own folder:
+
+| `kind` | Design | Uses, typically |
+|---|---|---|
+| `general` | this spec | the always-on rows above |
+| `story` | [story/DESIGN.md](story/DESIGN.md) | `ai`, `hal`, `rules`, `contradictions`, `echo`, `briefing`, `voice`, `page`, `field`, `files` |
+| `trading` | [trading/DESIGN.md](trading/DESIGN.md) | `hal`, `rules`, `echo`, `briefing`, `ledger`, `page`, `exchange` (and `ai` for analysis only) |
+
+A kind may narrow a mode, never widen it. For example, trading may not
+draft from an assumption.
+
 ## 2. The declaration
 
     {"scp_id": "noir/consumer-v1", "scp_version": "1.2.0",
@@ -52,6 +112,7 @@ through the Legacy:
      "declaration": {
        "type": "consumer",
        "name": "noir",
+       "kind": "story",
        "purpose": "A noir story about an unorthodox vigilante.",
        "entity": "Noir",
        "scope": ["The Vigilante", "Harbour District"],
@@ -59,7 +120,9 @@ through the Legacy:
        "may_draft": ["claim", "subject"],
        "thread": {"topic": "noir"} | null,
        "files": ["manuscript/"],
-       "digest": true},
+       "digest": true,
+       "uses": ["ai", "hal", "rules", "contradictions", "echo", "briefing", "voice", "page", "field", "files"],
+       "pins": {"rules/laws.json": "<sha256>"}},
      "licence": "MSL-1.0", "document_sha256": "...", "signature": {...}}
 
 - `name`: a lowercase slug, the same as the folder and the scp_id's
@@ -75,6 +138,13 @@ through the Legacy:
 - `thread`: its ai-gate thread, or null for none.
 - `files`: paths (relative to the repository) the runtime hashes for
   continuity.
+- `kind`: `general`, `story` or `trading` (§1.2).
+- `uses`: the catalogue keys it uses (§1.1). The always-on layers need
+  no key. An unknown key, or one its kind does not allow, makes the
+  declaration invalid.
+- `pins`: sha256 of each file whose content is law for it (rules,
+  strategies). A pinned file that no longer matches stops the consumer
+  until James seals a new declaration.
 - A changed declaration is a new capsule (`-v2`) that `supersedes` the
   last. The runtime uses the newest one whose seal verifies with the
   key in `$FORGE_HOME/key.pem`'s public half.
@@ -185,6 +255,12 @@ network.
 
 - **Declaration:** unsealed, wrongly signed, an unknown P9 name, or a
   bad slug exits 2. A `-v2` that supersedes `-v1` is used.
+- **Catalogue:** an unknown `uses` key, or one the kind does not allow,
+  makes the declaration invalid. Reaching for an undeclared capability
+  is refused and named in the report. A pinned file that no longer
+  matches stops the consumer. Each layer is used only in its mode
+  (§1.1); for example, no `draft` comes from a `gate` result without
+  James.
 - **World:** only verified, active claims in scope with a declared face
   are read; a claim in another face (a FACT, for a FICTION consumer)
   is not; broken claims are listed and not used.
@@ -220,4 +296,11 @@ network.
 ## Document control
 
 - **SPEC 0.1.0 (draft 1)** — 2026-11-18, by the VS Code AI on James's
-  instructions above. Waiting for James's sign-off; no code until then.
+  instructions above.
+- **SPEC 0.1.0 (draft 2)** — 2026-11-18: §1.1, the catalogue of what a
+  consumer may use and the one mode each layer is used in, declared in
+  `uses` and enforced; §1.2, kinds (story, trading), each with its design
+  in its own folder; `kind`, `uses` and `pins` in the declaration
+  (James: "does our spec for consumers include the things available to
+  it and how they may apply"). Waiting for James's sign-off; no code
+  until then.
