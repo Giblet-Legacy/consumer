@@ -19,10 +19,11 @@ Author:   James Gilbert (Giblets Forge)
 |---|---|---|
 | [`SPEC.md`](SPEC.md) | the runtime every consumer runs on: the declaration, a turn, drafts, state, digest, λ | draft 2 |
 | [`story/DESIGN.md`](story/DESIGN.md) | **story consumers:** parameters as claims, the Story page, play as assumptions, canon by James, Leighton four ways, P12 laws, P13 contradictions | design |
+| [`game/DESIGN.md`](game/DESIGN.md) | **game consumers:** a deduction game where trust is the gameplay. Each case is its own P9 world; witnesses earn or lose λ; DataCube finds contradictions; the AI only voices witnesses; an accusation is a HAL seal; the solution is hash-committed | design, with open decisions |
 | [`trading/DESIGN.md`](trading/DESIGN.md) | **trading consumers:** six engines (market data, strategies, trust, risk, HAL, execution), paper first, sealed mandates, the kill switch | design, with open decisions |
 
 Code will follow the same split: the runtime at the top, and each
-kind's engines in its own folder (`story/`, `trading/`), with tests
+kind's engines in its own folder (`story/`, `trading/`, `game/`), with tests
 beside them.
 
 ## Related repositories

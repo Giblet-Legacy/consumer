@@ -100,6 +100,7 @@ kind's design lives in its own folder:
 |---|---|---|
 | `general` | this spec | the always-on rows above |
 | `story` | [story/DESIGN.md](story/DESIGN.md) | `ai`, `hal`, `rules`, `contradictions`, `echo`, `briefing`, `voice`, `page`, `field`, `files` |
+| `game` | [game/DESIGN.md](game/DESIGN.md) | `ai` (voices only), `hal`, `rules`, `contradictions`, `briefing`, `ledger`, `page`, `files`. Each case is its own P9 database, never forge.db |
 | `trading` | [trading/DESIGN.md](trading/DESIGN.md) | `hal`, `rules`, `echo`, `briefing`, `ledger`, `page`, `exchange` (and `ai` for analysis only) |
 
 A kind may narrow a mode, never widen it. For example, trading may not
@@ -138,7 +139,7 @@ draft from an assumption.
 - `thread`: its ai-gate thread, or null for none.
 - `files`: paths (relative to the repository) the runtime hashes for
   continuity.
-- `kind`: `general`, `story` or `trading` (§1.2).
+- `kind`: `general`, `story`, `trading` or `game` (§1.2).
 - `uses`: the catalogue keys it uses (§1.1). The always-on layers need
   no key. An unknown key, or one its kind does not allow, makes the
   declaration invalid.
